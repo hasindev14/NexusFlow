@@ -1,3 +1,4 @@
+import crypto from "crypto";
 import bcrypt from "bcrypt";
 import User from "../models/user.model.js";
 import ApiError from "../../../core/ApiError.js";
@@ -178,7 +179,135 @@ const refreshAccessToken = async (refreshToken) => {
         refreshToken: newRefreshToken,
     };
 };
+
+const changePassword = async (
+    userId,
+    currentPassword,
+    newPassword
+) => {
+    const user = await User.findById(userId).select(
+        "+password +refreshToken"
+    );
+
+    if (!user) {
+        throw new ApiError(404, "User not found");
+    }
+
+    const isCurrentPasswordValid = await bcrypt.compare(
+        currentPassword,
+        user.password
+    );
+
+    if (!isCurrentPasswordValid) {
+        throw new ApiError(401, "Current password is incorrect");
+    }
+
+    const isSamePassword = await bcrypt.compare(
+        newPassword,
+        user.password
+    );
+
+    if (isSamePassword) {
+        throw new ApiError(
+            400,
+            "New password must be different from current password"
+        );
+    }
+
+    user.password = await bcrypt.hash(newPassword, 12);
+
+    user.passwordChangedAt = new Date();
+
+    // Invalidate existing refresh token
+    user.refreshToken = null;
+
+    await user.save();
+
+    return true;
+};
+
+const forgotPassword = async (email) => {
+    const normalizedEmail = email.toLowerCase().trim();
+
+    const user = await User.findOne({
+        email: normalizedEmail,
+    }).select("+passwordResetToken +passwordResetExpires");
+
+    if (!user) {
+        throw new ApiError(
+            404,
+            "No account found with this email"
+        );
+    }
+
+    const resetToken = crypto.randomBytes(32).toString("hex");
+
+    const hashedResetToken = crypto
+        .createHash("sha256")
+        .update(resetToken)
+        .digest("hex");
+
+    user.passwordResetToken = hashedResetToken;
+
+    user.passwordResetExpires =
+        new Date(Date.now() + 15 * 60 * 1000);
+
+    await user.save();
+
+    return {
+        resetToken,
+        expiresIn: "15 minutes",
+    };
+};
+
+const resetPassword = async (
+    resetToken,
+    newPassword
+) => {
+    if (!resetToken) {
+        throw new ApiError(
+            400,
+            "Password reset token is required"
+        );
+    }
+
+    const hashedResetToken = crypto
+        .createHash("sha256")
+        .update(resetToken)
+        .digest("hex");
+
+    const user = await User.findOne({
+        passwordResetToken: hashedResetToken,
+        passwordResetExpires: {
+            $gt: new Date(),
+        },
+    }).select(
+        "+password +passwordResetToken +passwordResetExpires +refreshToken"
+    );
+
+    if (!user) {
+        throw new ApiError(
+            400,
+            "Invalid or expired password reset token"
+        );
+    }
+
+    user.password = await bcrypt.hash(newPassword, 12);
+
+    user.passwordChangedAt = new Date();
+
+    user.passwordResetToken = null;
+
+    user.passwordResetExpires = null;
+
+    user.refreshToken = null;
+
+    await user.save();
+
+    return true;
+};
 export default {
     registerUser,
     loginUser, getCurrentUser,logoutUser, refreshAccessToken,
+    changePassword,forgotPassword,resetPassword,
 };

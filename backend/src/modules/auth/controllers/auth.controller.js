@@ -64,7 +64,62 @@ const refreshToken = asyncHandler(async (req, res) => {
     );
 });
 
+const changePassword = asyncHandler(async (req, res) => {
+    const {
+        currentPassword,
+        newPassword,
+    } = req.body;
+
+    await authService.changePassword(
+        req.user._id,
+        currentPassword,
+        newPassword
+    );
+
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            "Password changed successfully",
+            null
+        )
+    );
+});
+
+const forgotPassword = asyncHandler(async (req, res) => {
+    const { email } = req.body;
+
+    const result = await authService.forgotPassword(email);
+
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            "Password reset token generated successfully",
+            result
+        )
+    );
+});
+
+const resetPassword = asyncHandler(async (req, res) => {
+    const {
+        resetToken,
+        newPassword,
+    } = req.body;
+
+    await authService.resetPassword(
+        resetToken,
+        newPassword
+    );
+
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            "Password reset successfully",
+            null
+        )
+    );
+});
 export {
     register,
-    login, getMe, logout, refreshToken,
+    login, getMe, logout, refreshToken,changePassword, forgotPassword,
+    resetPassword,
 };
