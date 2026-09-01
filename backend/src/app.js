@@ -3,6 +3,7 @@ import ApiError from "./core/ApiError.js";
 import notFound from "./middlewares/notFound.middleware.js";
 import errorHandler from "./middlewares/error.middleware.js";
 import authRoutes from "./modules/auth/routes/auth.routes.js";
+import userRoutes from "./modules/users/routes/user.routes.js";
 
 
 const app = express();
@@ -17,7 +18,7 @@ app.get("/", (req, res) => {
 });
 
 app.use("/api/v1/auth", authRoutes);
-
+app.use("/api/v1/users", userRoutes);
 
 // Test error route
 app.get("/api/v1/test-error", (req, res, next) => {
