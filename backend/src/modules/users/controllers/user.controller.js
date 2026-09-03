@@ -31,7 +31,22 @@ const updateProfile = asyncHandler(async (req, res) => {
     );
 });
 
+const uploadAvatar = asyncHandler(async (req, res) => {
+    const result = await userService.uploadUserAvatar(
+        req.user._id,
+        req.file
+    );
+
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            "Avatar uploaded successfully",
+            result
+        )
+    );
+});
+
 export {
     getProfile,
-    updateProfile,
+    updateProfile, uploadAvatar,
 };

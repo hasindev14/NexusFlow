@@ -1,8 +1,9 @@
 import express from "express";
-
+import upload from "../../../middlewares/upload.middleware.js";
 import {
     getProfile,
-    updateProfile,
+    updateProfile,    uploadAvatar,
+
 } from "../controllers/user.controller.js";
 
 import authenticateUser from "../../../middlewares/auth.middleware.js";
@@ -28,4 +29,10 @@ router.patch(
     updateProfile
 );
 
+router.post(
+    "/me/avatar",
+    authenticateUser,
+    upload.single("avatar"),
+    uploadAvatar
+);
 export default router;

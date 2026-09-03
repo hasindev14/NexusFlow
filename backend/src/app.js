@@ -4,11 +4,13 @@ import notFound from "./middlewares/notFound.middleware.js";
 import errorHandler from "./middlewares/error.middleware.js";
 import authRoutes from "./modules/auth/routes/auth.routes.js";
 import userRoutes from "./modules/users/routes/user.routes.js";
-
+import organizationRoutes from "./modules/organizations/routes/organization.routes.js";
 
 const app = express();
 
 app.use(express.json());
+
+app.use("/api/v1/organizations", organizationRoutes);
 
 app.get("/", (req, res) => {
     res.status(200).json({
