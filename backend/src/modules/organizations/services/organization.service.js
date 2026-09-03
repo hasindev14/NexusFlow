@@ -128,6 +128,30 @@ const updateOrganization = async (
 
     return organization;
 };
+const deactivateOrganization = async (userId, organizationId) => {
+    const organization = await Organization.findById(organizationId);
+
+    if (!organization || !organization.isActive) {
+        throw new ApiError(404, "Organization not found");
+    }
+
+    if (organization.owner.toString() !== userId.toString()) {
+        throw new ApiError(
+            403,
+            "Only the organization owner can deactivate it"
+        );
+    }
+
+    organization.isActive = false;
+
+    await organization.save();
+
+    return {
+        organizationId: organization._id,
+        isActive: organization.isActive,
+    };
+};
 export default {
-    createOrganization, getMyOrganizations, getOrganizationById, updateOrganization
+    createOrganization, getMyOrganizations, getOrganizationById,
+     updateOrganization, deactivateOrganization
 };

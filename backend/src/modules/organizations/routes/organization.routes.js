@@ -37,5 +37,10 @@ router.patch(
     validate(updateOrganizationSchema),
     organizationController.updateOrganization
 );
+router.delete(
+    "/:organizationId",
+    authenticateUser,
+    organizationController.deactivateOrganization
+);
 
 export default router;

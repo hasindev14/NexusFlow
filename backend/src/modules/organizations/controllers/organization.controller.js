@@ -61,7 +61,21 @@ const updateOrganization = asyncHandler(async (req, res) => {
         )
     );
 });
+const deactivateOrganization = asyncHandler(async (req, res) => {
+    const result = await organizationService.deactivateOrganization(
+        req.user._id,
+        req.params.organizationId
+    );
 
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            "Organization deactivated successfully",
+            result
+        )
+    );
+});
 export default {
-    createOrganization, getMyOrganizations, getOrganizationById, updateOrganization
+    createOrganization, getMyOrganizations, getOrganizationById, 
+    updateOrganization, deactivateOrganization
 };
