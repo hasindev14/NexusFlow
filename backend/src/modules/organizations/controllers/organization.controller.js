@@ -17,6 +17,51 @@ const createOrganization = asyncHandler(async (req, res) => {
     );
 });
 
+const getMyOrganizations = asyncHandler(async (req, res) => {
+    const organizations = await organizationService.getMyOrganizations(
+        req.user._id
+    );
+
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            "Organizations fetched successfully",
+            organizations
+        )
+    );
+});
+
+const getOrganizationById = asyncHandler(async (req, res) => {
+    const organization = await organizationService.getOrganizationById(
+        req.user._id,
+        req.params.organizationId
+    );
+
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            "Organization fetched successfully",
+            organization
+        )
+    );
+});
+
+const updateOrganization = asyncHandler(async (req, res) => {
+    const organization = await organizationService.updateOrganization(
+        req.user._id,
+        req.params.organizationId,
+        req.body
+    );
+
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            "Organization updated successfully",
+            organization
+        )
+    );
+});
+
 export default {
-    createOrganization,
+    createOrganization, getMyOrganizations, getOrganizationById, updateOrganization
 };
