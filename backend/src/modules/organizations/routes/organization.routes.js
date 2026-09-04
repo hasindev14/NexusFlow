@@ -62,4 +62,14 @@ router.patch(
     validate(updateMemberRoleSchema),
     organizationController.updateMemberRole
 );
+router.delete(
+    "/:organizationId/members/:userId",
+    authenticateUser,
+    organizationController.removeMember
+);
+router.delete(
+    "/:organizationId/leave",
+    authenticateUser,
+    organizationController.leaveOrganization
+);
 export default router;

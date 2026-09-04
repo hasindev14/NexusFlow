@@ -325,8 +325,141 @@ const updateMemberRole = async (
             member.user._id.toString() === userId.toString()
     );
 };
+const removeMember = async (
+    requesterId,
+    organizationId,
+    userId
+) => {
+    const organization = await Organization.findById(organizationId);
+
+    if (!organization || !organization.isActive) {
+        throw new ApiError(404, "Organization not found");
+    }
+
+    // Find requester
+    const requester = organization.members.find(
+        (member) =>
+            member.user.toString() === requesterId.toString()
+    );
+
+    if (!requester) {
+        throw new ApiError(
+            403,
+            "You are not a member of this organization"
+        );
+    }
+
+    // Only OWNER or ADMIN can remove members
+    if (!["OWNER", "ADMIN"].includes(requester.role)) {
+        throw new ApiError(
+            403,
+            "You do not have permission to remove members"
+        );
+    }
+
+    // Prevent removing yourself
+    if (requesterId.toString() === userId.toString()) {
+        throw new ApiError(
+            400,
+            "You cannot remove yourself from the organization"
+        );
+    }
+
+    // Find target member
+    const targetMember = organization.members.find(
+        (member) =>
+            member.user.toString() === userId.toString()
+    );
+
+    if (!targetMember) {
+        throw new ApiError(
+            404,
+            "Member not found in this organization"
+        );
+    }
+
+    // Owner cannot be removed
+    if (targetMember.role === "OWNER") {
+        throw new ApiError(
+            403,
+            "The organization owner cannot be removed"
+        );
+    }
+
+    // Admin can only remove MEMBER
+    if (
+        requester.role === "ADMIN" &&
+        targetMember.role !== "MEMBER"
+    ) {
+        throw new ApiError(
+            403,
+            "Admins can only remove MEMBER users"
+        );
+    }
+
+    organization.members = organization.members.filter(
+        (member) =>
+            member.user.toString() !== userId.toString()
+    );
+
+    await organization.save();
+
+    return {
+        userId,
+        organizationId,
+        removed: true,
+    };
+};
+const leaveOrganization = async (
+    userId,
+    organizationId
+) => {
+    const organization = await Organization.findById(
+        organizationId
+    );
+
+    if (!organization || !organization.isActive) {
+        throw new ApiError(
+            404,
+            "Organization not found"
+        );
+    }
+
+    const member = organization.members.find(
+        (member) =>
+            member.user.toString() === userId.toString()
+    );
+
+    if (!member) {
+        throw new ApiError(
+            403,
+            "You are not a member of this organization"
+        );
+    }
+
+    // Owner cannot leave
+    if (member.role === "OWNER") {
+        throw new ApiError(
+            400,
+            "Organization owner cannot leave the organization"
+        );
+    }
+
+    organization.members = organization.members.filter(
+        (member) =>
+            member.user.toString() !== userId.toString()
+    );
+
+    await organization.save();
+
+    return {
+        organizationId: organization._id,
+        userId,
+        left: true,
+    };
+};
 export default {
     createOrganization, getMyOrganizations, getOrganizationById,
      updateOrganization, deactivateOrganization ,addMember ,
-     getOrganizationMembers, updateMemberRole
+     getOrganizationMembers, updateMemberRole, removeMember, leaveOrganization
 };

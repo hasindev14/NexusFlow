@@ -123,8 +123,39 @@ const updateMemberRole = asyncHandler(async (req, res) => {
         )
     );
 });
+
+const removeMember = asyncHandler(async (req, res) => {
+    const result = await organizationService.removeMember(
+        req.user._id,
+        req.params.organizationId,
+        req.params.userId
+    );
+
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            "Member removed successfully",
+            result
+        )
+    );
+});
+const leaveOrganization = asyncHandler(async (req, res) => {
+    const result =
+        await organizationService.leaveOrganization(
+            req.user._id,
+            req.params.organizationId
+        );
+
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            "You have left the organization successfully",
+            result
+        )
+    );
+});
 export default {
     createOrganization, getMyOrganizations, getOrganizationById, 
     updateOrganization, deactivateOrganization , addMember,
-     getOrganizationMembers, updateMemberRole
+     getOrganizationMembers, updateMemberRole, removeMember, leaveOrganization
 };
