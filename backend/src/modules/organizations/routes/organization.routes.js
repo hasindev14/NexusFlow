@@ -5,7 +5,7 @@ import validate from "../../../middlewares/validate.middleware.js";
 
 import {
     createOrganizationSchema,
-    updateOrganizationSchema,
+    updateOrganizationSchema, addMemberSchema,
 } from "../validations/organization.validation.js";
 
 import organizationController from "../controllers/organization.controller.js";
@@ -43,4 +43,10 @@ router.delete(
     organizationController.deactivateOrganization
 );
 
+router.post(
+    "/:organizationId/members",
+    authenticateUser,
+    validate(addMemberSchema),
+    organizationController.addMember
+);
 export default router;

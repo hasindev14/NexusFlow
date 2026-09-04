@@ -75,7 +75,23 @@ const deactivateOrganization = asyncHandler(async (req, res) => {
         )
     );
 });
+const addMember = asyncHandler(async (req, res) => {
+    const member = await organizationService.addMember(
+        req.user._id,
+        req.params.organizationId,
+        req.body.userId,
+        req.body.role
+    );
+
+    return res.status(201).json(
+        new ApiResponse(
+            201,
+            "Member added successfully",
+            member
+        )
+    );
+});
 export default {
     createOrganization, getMyOrganizations, getOrganizationById, 
-    updateOrganization, deactivateOrganization
+    updateOrganization, deactivateOrganization , addMember
 };

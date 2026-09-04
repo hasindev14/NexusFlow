@@ -25,3 +25,14 @@ export const updateOrganizationSchema = Joi.object({
         .max(500)
         .allow(""),
 }).min(1);
+
+export const addMemberSchema = Joi.object({
+    userId: Joi.string()
+        .hex()
+        .length(24)
+        .required(),
+
+    role: Joi.string()
+        .valid("ADMIN", "MEMBER")
+        .default("MEMBER"),
+});

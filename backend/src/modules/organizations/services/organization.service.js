@@ -1,3 +1,4 @@
+import User from "../../auth/models/user.model.js";
 import Organization from "../models/organization.model.js";
 import ApiError from "../../../core/ApiError.js";
 
@@ -151,7 +152,73 @@ const deactivateOrganization = async (userId, organizationId) => {
         isActive: organization.isActive,
     };
 };
+
+const addMember = async (
+    requesterId,
+    organizationId,
+    userId,
+    role
+) => {
+    const organization = await Organization.findById(organizationId);
+
+    if (!organization || !organization.isActive) {
+        throw new ApiError(404, "Organization not found");
+    }
+
+    const requester = organization.members.find(
+        (member) =>
+            member.user.toString() === requesterId.toString()
+    );
+
+    if (!requester) {
+        throw new ApiError(
+            403,
+            "You are not a member of this organization"
+        );
+    }
+
+    if (!["OWNER", "ADMIN"].includes(requester.role)) {
+        throw new ApiError(
+            403,
+            "You do not have permission to add members"
+        );
+    }
+
+    const existingMember = organization.members.find(
+        (member) =>
+            member.user.toString() === userId.toString()
+    );
+
+    if (existingMember) {
+        throw new ApiError(
+            409,
+            "User is already a member of this organization"
+        );
+    }
+
+    const user = await User.findById(userId);
+
+    if (!user) {
+        throw new ApiError(404, "User not found");
+    }
+
+    organization.members.push({
+        user: userId,
+        role,
+    });
+
+    await organization.save();
+
+    await organization.populate(
+        "members.user",
+        "firstName lastName email"
+    );
+
+    return organization.members[
+        organization.members.length - 1
+    ];
+};
 export default {
     createOrganization, getMyOrganizations, getOrganizationById,
-     updateOrganization, deactivateOrganization
+     updateOrganization, deactivateOrganization ,addMember
 };
