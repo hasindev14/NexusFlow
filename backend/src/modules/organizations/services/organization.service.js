@@ -218,7 +218,35 @@ const addMember = async (
         organization.members.length - 1
     ];
 };
+
+const getOrganizationMembers = async (userId, organizationId) => {
+    const organization = await Organization.findOne({
+        _id: organizationId,
+        isActive: true,
+    }).populate(
+        "members.user",
+        "firstName lastName email avatar"
+    );
+
+    if (!organization) {
+        throw new ApiError(404, "Organization not found");
+    }
+
+    const isMember = organization.members.some(
+        (member) =>
+            member.user._id.toString() === userId.toString()
+    );
+
+    if (!isMember) {
+        throw new ApiError(
+            403,
+            "You are not a member of this organization"
+        );
+    }
+
+    return organization.members;
+};
 export default {
     createOrganization, getMyOrganizations, getOrganizationById,
-     updateOrganization, deactivateOrganization ,addMember
+     updateOrganization, deactivateOrganization ,addMember ,getOrganizationMembers
 };

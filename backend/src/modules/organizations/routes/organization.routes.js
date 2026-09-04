@@ -49,4 +49,10 @@ router.post(
     validate(addMemberSchema),
     organizationController.addMember
 );
+
+router.get(
+    "/:organizationId/members",
+    authenticateUser,
+    organizationController.getOrganizationMembers
+);
 export default router;

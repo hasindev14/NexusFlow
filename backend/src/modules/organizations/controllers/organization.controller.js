@@ -91,7 +91,22 @@ const addMember = asyncHandler(async (req, res) => {
         )
     );
 });
+
+const getOrganizationMembers = asyncHandler(async (req, res) => {
+    const members = await organizationService.getOrganizationMembers(
+        req.user._id,
+        req.params.organizationId
+    );
+
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            "Organization members fetched successfully",
+            members
+        )
+    );
+});
 export default {
     createOrganization, getMyOrganizations, getOrganizationById, 
-    updateOrganization, deactivateOrganization , addMember
+    updateOrganization, deactivateOrganization , addMember, getOrganizationMembers
 };
