@@ -4,8 +4,8 @@ import authenticateUser from "../../../middlewares/auth.middleware.js";
 import validate from "../../../middlewares/validate.middleware.js";
 
 import {
-    createOrganizationSchema,
-    updateOrganizationSchema, addMemberSchema,
+    createOrganizationSchema,updateOrganizationSchema,
+     addMemberSchema,updateMemberRoleSchema,
 } from "../validations/organization.validation.js";
 
 import organizationController from "../controllers/organization.controller.js";
@@ -54,5 +54,12 @@ router.get(
     "/:organizationId/members",
     authenticateUser,
     organizationController.getOrganizationMembers
+);
+
+router.patch(
+    "/:organizationId/members/:userId",
+    authenticateUser,
+    validate(updateMemberRoleSchema),
+    organizationController.updateMemberRole
 );
 export default router;

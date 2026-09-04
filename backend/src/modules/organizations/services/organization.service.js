@@ -246,7 +246,87 @@ const getOrganizationMembers = async (userId, organizationId) => {
 
     return organization.members;
 };
+const updateMemberRole = async (
+    requesterId,
+    organizationId,
+    userId,
+    newRole
+) => {
+    const organization = await Organization.findById(organizationId);
+
+    if (!organization || !organization.isActive) {
+        throw new ApiError(404, "Organization not found");
+    }
+
+    // Find requester
+    const requester = organization.members.find(
+        (member) =>
+            member.user.toString() === requesterId.toString()
+    );
+
+    if (!requester) {
+        throw new ApiError(
+            403,
+            "You are not a member of this organization"
+        );
+    }
+
+    // Only OWNER or ADMIN can update roles
+    if (!["OWNER", "ADMIN"].includes(requester.role)) {
+        throw new ApiError(
+            403,
+            "You do not have permission to update member roles"
+        );
+    }
+
+    // Find target member
+    const targetMember = organization.members.find(
+        (member) =>
+            member.user.toString() === userId.toString()
+    );
+
+    if (!targetMember) {
+        throw new ApiError(
+            404,
+            "Member not found in this organization"
+        );
+    }
+
+    // OWNER role cannot be changed
+    if (targetMember.role === "OWNER") {
+        throw new ApiError(
+            403,
+            "The organization owner role cannot be changed"
+        );
+    }
+
+    // ADMIN can only modify MEMBER
+    if (
+        requester.role === "ADMIN" &&
+        targetMember.role !== "MEMBER"
+    ) {
+        throw new ApiError(
+            403,
+            "Admins can only update MEMBER roles"
+        );
+    }
+
+    targetMember.role = newRole;
+
+    await organization.save();
+
+    await organization.populate(
+        "members.user",
+        "firstName lastName email"
+    );
+
+    return organization.members.find(
+        (member) =>
+            member.user._id.toString() === userId.toString()
+    );
+};
 export default {
     createOrganization, getMyOrganizations, getOrganizationById,
-     updateOrganization, deactivateOrganization ,addMember ,getOrganizationMembers
+     updateOrganization, deactivateOrganization ,addMember ,
+     getOrganizationMembers, updateMemberRole
 };

@@ -106,7 +106,25 @@ const getOrganizationMembers = asyncHandler(async (req, res) => {
         )
     );
 });
+
+const updateMemberRole = asyncHandler(async (req, res) => {
+    const member = await organizationService.updateMemberRole(
+        req.user._id,
+        req.params.organizationId,
+        req.params.userId,
+        req.body.role
+    );
+
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            "Member role updated successfully",
+            member
+        )
+    );
+});
 export default {
     createOrganization, getMyOrganizations, getOrganizationById, 
-    updateOrganization, deactivateOrganization , addMember, getOrganizationMembers
+    updateOrganization, deactivateOrganization , addMember,
+     getOrganizationMembers, updateMemberRole
 };

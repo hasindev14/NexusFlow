@@ -36,3 +36,9 @@ export const addMemberSchema = Joi.object({
         .valid("ADMIN", "MEMBER")
         .default("MEMBER"),
 });
+
+export const updateMemberRoleSchema = Joi.object({
+    role: Joi.string()
+        .valid("ADMIN", "MEMBER")
+        .required(),
+});
