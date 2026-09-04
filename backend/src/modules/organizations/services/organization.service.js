@@ -1,4 +1,6 @@
+import crypto from "crypto";
 import User from "../../auth/models/user.model.js";
+import Invitation from "../models/invitation.model.js";
 import Organization from "../models/organization.model.js";
 import ApiError from "../../../core/ApiError.js";
 
@@ -458,8 +460,125 @@ const leaveOrganization = async (
         left: true,
     };
 };
+const createInvitation = async (
+    requesterId,
+    organizationId,
+    email,
+    role
+) => {
+    const organization = await Organization.findById(
+        organizationId
+    );
+
+    if (!organization || !organization.isActive) {
+        throw new ApiError(
+            404,
+            "Organization not found"
+        );
+    }
+
+    const requester = organization.members.find(
+        (member) =>
+            member.user.toString() ===
+            requesterId.toString()
+    );
+
+    if (!requester) {
+        throw new ApiError(
+            403,
+            "You are not a member of this organization"
+        );
+    }
+
+    if (!["OWNER", "ADMIN"].includes(requester.role)) {
+        throw new ApiError(
+            403,
+            "You do not have permission to invite users"
+        );
+    }
+
+    // Find invited user
+    const user = await User.findOne({
+        email: email.toLowerCase(),
+    });
+
+    if (!user) {
+        throw new ApiError(
+            404,
+            "No user exists with this email"
+        );
+    }
+
+    // Check existing member
+    const existingMember = organization.members.find(
+        (member) =>
+            member.user.toString() ===
+            user._id.toString()
+    );
+
+    if (existingMember) {
+        throw new ApiError(
+            409,
+            "User is already a member of this organization"
+        );
+    }
+
+    // Check pending invitation
+    const existingInvitation =
+        await Invitation.findOne({
+            organization: organizationId,
+            email: email.toLowerCase(),
+            status: "PENDING",
+            expiresAt: { $gt: new Date() },
+        });
+
+    if (existingInvitation) {
+        throw new ApiError(
+            409,
+            "A pending invitation already exists for this user"
+        );
+    }
+
+    const token = crypto
+        .randomBytes(32)
+        .toString("hex");
+
+    const expiresAt = new Date(
+        Date.now() + 24 * 60 * 60 * 1000
+    );
+
+    const invitation = await Invitation.create({
+        organization: organizationId,
+        invitedBy: requesterId,
+        email: email.toLowerCase(),
+        role,
+        token,
+        expiresAt,
+    });
+
+    return invitation;
+};
+const getMyInvitations = async (userId) => {
+    const user = await User.findById(userId);
+
+    if (!user) {
+        throw new ApiError(404, "User not found");
+    }
+
+    const invitations = await Invitation.find({
+        email: user.email.toLowerCase(),
+        status: "PENDING",
+        expiresAt: { $gt: new Date() },
+    })
+        .populate("organization", "name slug description")
+        .populate("invitedBy", "firstName lastName email")
+        .sort({ createdAt: -1 });
+
+    return invitations;
+};
 export default {
     createOrganization, getMyOrganizations, getOrganizationById,
      updateOrganization, deactivateOrganization ,addMember ,
-     getOrganizationMembers, updateMemberRole, removeMember, leaveOrganization
+     getOrganizationMembers, updateMemberRole, removeMember, leaveOrganization,
+     createInvitation, getMyInvitations
 };

@@ -42,3 +42,15 @@ export const updateMemberRoleSchema = Joi.object({
         .valid("ADMIN", "MEMBER")
         .required(),
 });
+
+export const createInvitationSchema = Joi.object({
+    email: Joi.string()
+        .email()
+        .lowercase()
+        .trim()
+        .required(),
+
+    role: Joi.string()
+        .valid("ADMIN", "MEMBER")
+        .default("MEMBER"),
+});

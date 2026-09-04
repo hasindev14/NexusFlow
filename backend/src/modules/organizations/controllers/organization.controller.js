@@ -154,8 +154,40 @@ const leaveOrganization = asyncHandler(async (req, res) => {
         )
     );
 });
+const createInvitation = asyncHandler(async (req, res) => {
+    const invitation =
+        await organizationService.createInvitation(
+            req.user._id,
+            req.params.organizationId,
+            req.body.email,
+            req.body.role
+        );
+
+    return res.status(201).json(
+        new ApiResponse(
+            201,
+            "Invitation created successfully",
+            invitation
+        )
+    );
+});
+const getMyInvitations = asyncHandler(async (req, res) => {
+    const invitations =
+        await organizationService.getMyInvitations(
+            req.user._id
+        );
+
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            "Invitations fetched successfully",
+            invitations
+        )
+    );
+});
 export default {
     createOrganization, getMyOrganizations, getOrganizationById, 
     updateOrganization, deactivateOrganization , addMember,
-     getOrganizationMembers, updateMemberRole, removeMember, leaveOrganization
+     getOrganizationMembers, updateMemberRole, removeMember, leaveOrganization,
+        createInvitation, getMyInvitations
 };
