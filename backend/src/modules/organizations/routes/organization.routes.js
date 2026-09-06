@@ -31,13 +31,25 @@ router.post(
 );
 
 // Get my invitations
-// ⚠️ Must be before /:organizationId
+// Must be before /:organizationId
 router.get(
     "/invitations",
     authenticateUser,
     organizationController.getMyInvitations
 );
 
+// Accept invitation
+router.post(
+    "/invitations/:invitationId/accept",
+    authenticateUser,
+    organizationController.acceptInvitation
+);
+
+router.post(
+    "/invitations/:invitationId/reject",
+    authenticateUser,
+    organizationController.rejectInvitation
+);
 // Get organization by ID
 router.get(
     "/:organizationId",

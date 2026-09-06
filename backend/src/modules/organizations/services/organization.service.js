@@ -576,9 +576,167 @@ const getMyInvitations = async (userId) => {
 
     return invitations;
 };
+const acceptInvitation = async (
+    userId,
+    invitationId
+) => {
+    const invitation = await Invitation.findById(
+        invitationId
+    );
+
+    if (!invitation) {
+        throw new ApiError(
+            404,
+            "Invitation not found"
+        );
+    }
+
+    if (invitation.status !== "PENDING") {
+        throw new ApiError(
+            400,
+            "This invitation is no longer pending"
+        );
+    }
+
+    if (invitation.expiresAt < new Date()) {
+        invitation.status = "EXPIRED";
+        await invitation.save();
+
+        throw new ApiError(
+            400,
+            "This invitation has expired"
+        );
+    }
+
+    const user = await User.findById(userId);
+
+    if (!user) {
+        throw new ApiError(
+            404,
+            "User not found"
+        );
+    }
+
+    // Make sure invitation belongs to logged-in user
+    if (
+        user.email.toLowerCase() !==
+        invitation.email.toLowerCase()
+    ) {
+        throw new ApiError(
+            403,
+            "This invitation does not belong to you"
+        );
+    }
+
+    const organization = await Organization.findById(
+        invitation.organization
+    );
+
+    if (!organization || !organization.isActive) {
+        throw new ApiError(
+            404,
+            "Organization not found"
+        );
+    }
+
+    // Prevent duplicate membership
+    const existingMember = organization.members.find(
+        (member) =>
+            member.user.toString() === userId.toString()
+    );
+
+    if (existingMember) {
+        invitation.status = "ACCEPTED";
+        await invitation.save();
+
+        throw new ApiError(
+            409,
+            "You are already a member of this organization"
+        );
+    }
+
+    organization.members.push({
+        user: userId,
+        role: invitation.role,
+    });
+
+    await organization.save();
+
+    invitation.status = "ACCEPTED";
+
+    await invitation.save();
+
+    return {
+        organizationId: organization._id,
+        organizationName: organization.name,
+        role: invitation.role,
+        invitationId: invitation._id,
+    };
+};
+const rejectInvitation = async (
+    userId,
+    invitationId
+) => {
+    const invitation = await Invitation.findById(
+        invitationId
+    );
+
+    if (!invitation) {
+        throw new ApiError(
+            404,
+            "Invitation not found"
+        );
+    }
+
+    if (invitation.status !== "PENDING") {
+        throw new ApiError(
+            400,
+            "This invitation is no longer pending"
+        );
+    }
+
+    if (invitation.expiresAt < new Date()) {
+        invitation.status = "EXPIRED";
+        await invitation.save();
+
+        throw new ApiError(
+            400,
+            "This invitation has expired"
+        );
+    }
+
+    const user = await User.findById(userId);
+
+    if (!user) {
+        throw new ApiError(
+            404,
+            "User not found"
+        );
+    }
+
+    // Make sure invitation belongs to logged-in user
+    if (
+        user.email.toLowerCase() !==
+        invitation.email.toLowerCase()
+    ) {
+        throw new ApiError(
+            403,
+            "This invitation does not belong to you"
+        );
+    }
+
+    invitation.status = "REJECTED";
+
+    await invitation.save();
+
+    return {
+        invitationId: invitation._id,
+        status: invitation.status,
+    };
+};
 export default {
     createOrganization, getMyOrganizations, getOrganizationById,
      updateOrganization, deactivateOrganization ,addMember ,
      getOrganizationMembers, updateMemberRole, removeMember, leaveOrganization,
-     createInvitation, getMyInvitations
+     createInvitation, getMyInvitations ,acceptInvitation, rejectInvitation
 };
