@@ -215,9 +215,44 @@ const rejectInvitation = asyncHandler(async (req, res) => {
         )
     );
 });
+const getOrganizationInvitations = asyncHandler(
+    async (req, res) => {
+        const invitations =
+            await organizationService.getOrganizationInvitations(
+                req.user._id,
+                req.params.organizationId
+            );
+
+        return res.status(200).json(
+            new ApiResponse(
+                200,
+                "Organization invitations fetched successfully",
+                invitations
+            )
+        );
+    }
+);
+
+const cancelInvitation = asyncHandler(async (req, res) => {
+    const result =
+        await organizationService.cancelInvitation(
+            req.user._id,
+            req.params.organizationId,
+            req.params.invitationId
+        );
+
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            "Invitation cancelled successfully",
+            result
+        )
+    );
+});
 export default {
     createOrganization, getMyOrganizations, getOrganizationById, 
     updateOrganization, deactivateOrganization , addMember,
      getOrganizationMembers, updateMemberRole, removeMember, leaveOrganization,
-        createInvitation, getMyInvitations, acceptInvitation, rejectInvitation
+        createInvitation, getMyInvitations, acceptInvitation, rejectInvitation,
+        getOrganizationInvitations, cancelInvitation
 };

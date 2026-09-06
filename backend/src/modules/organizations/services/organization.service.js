@@ -734,9 +734,120 @@ const rejectInvitation = async (
         status: invitation.status,
     };
 };
+const getOrganizationInvitations = async (
+    requesterId,
+    organizationId
+) => {
+    const organization = await Organization.findById(
+        organizationId
+    );
+
+    if (!organization || !organization.isActive) {
+        throw new ApiError(
+            404,
+            "Organization not found"
+        );
+    }
+
+    const requester = organization.members.find(
+        (member) =>
+            member.user.toString() ===
+            requesterId.toString()
+    );
+
+    if (!requester) {
+        throw new ApiError(
+            403,
+            "You are not a member of this organization"
+        );
+    }
+
+    if (!["OWNER", "ADMIN"].includes(requester.role)) {
+        throw new ApiError(
+            403,
+            "You do not have permission to view invitations"
+        );
+    }
+
+    const invitations = await Invitation.find({
+        organization: organizationId,
+    })
+        .populate(
+            "invitedBy",
+            "firstName lastName email"
+        )
+        .sort({ createdAt: -1 });
+
+    return invitations;
+};
+const cancelInvitation = async (
+    requesterId,
+    organizationId,
+    invitationId
+) => {
+    const organization = await Organization.findById(
+        organizationId
+    );
+
+    if (!organization || !organization.isActive) {
+        throw new ApiError(
+            404,
+            "Organization not found"
+        );
+    }
+
+    const requester = organization.members.find(
+        (member) =>
+            member.user.toString() ===
+            requesterId.toString()
+    );
+
+    if (!requester) {
+        throw new ApiError(
+            403,
+            "You are not a member of this organization"
+        );
+    }
+
+    if (!["OWNER", "ADMIN"].includes(requester.role)) {
+        throw new ApiError(
+            403,
+            "You do not have permission to cancel invitations"
+        );
+    }
+
+    const invitation = await Invitation.findOne({
+        _id: invitationId,
+        organization: organizationId,
+    });
+
+    if (!invitation) {
+        throw new ApiError(
+            404,
+            "Invitation not found"
+        );
+    }
+
+    if (invitation.status !== "PENDING") {
+        throw new ApiError(
+            400,
+            "Only pending invitations can be cancelled"
+        );
+    }
+
+    invitation.status = "REJECTED";
+
+    await invitation.save();
+
+    return {
+        invitationId: invitation._id,
+        status: invitation.status,
+    };
+};
 export default {
     createOrganization, getMyOrganizations, getOrganizationById,
      updateOrganization, deactivateOrganization ,addMember ,
      getOrganizationMembers, updateMemberRole, removeMember, leaveOrganization,
-     createInvitation, getMyInvitations ,acceptInvitation, rejectInvitation
+     createInvitation, getMyInvitations ,acceptInvitation, rejectInvitation,
+        getOrganizationInvitations, cancelInvitation
 };

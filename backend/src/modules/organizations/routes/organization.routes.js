@@ -44,11 +44,25 @@ router.post(
     authenticateUser,
     organizationController.acceptInvitation
 );
-
+// Reject invitation
 router.post(
     "/invitations/:invitationId/reject",
     authenticateUser,
     organizationController.rejectInvitation
+);
+
+// Get organization invitations
+router.get(
+    "/:organizationId/invitations",
+    authenticateUser,
+    organizationController.getOrganizationInvitations
+);
+
+// Cancel invitation
+router.delete(
+    "/:organizationId/invitations/:invitationId",
+    authenticateUser,
+    organizationController.cancelInvitation
 );
 // Get organization by ID
 router.get(
