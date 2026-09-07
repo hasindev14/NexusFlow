@@ -5,13 +5,13 @@ import errorHandler from "./middlewares/error.middleware.js";
 import authRoutes from "./modules/auth/routes/auth.routes.js";
 import userRoutes from "./modules/users/routes/user.routes.js";
 import organizationRoutes from "./modules/organizations/routes/organization.routes.js";
-
+import projectRoutes from "./modules/projects/routes/project.routes.js";
 const app = express();
 
 app.use(express.json());
 
 app.use("/api/v1/organizations", organizationRoutes);
-
+app.use("/api/v1", projectRoutes);
 app.get("/", (req, res) => {
     res.status(200).json({
         success: true,
