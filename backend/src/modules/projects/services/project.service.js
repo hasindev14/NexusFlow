@@ -535,7 +535,6 @@ const updateProjectMemberRole = async (
         .populate("owner", "firstName lastName email")
         .populate("members.user", "firstName lastName email");
 };
-
 const removeProjectMember = async (
     projectId,
     userId,
@@ -580,14 +579,20 @@ const removeProjectMember = async (
     );
 
     if (memberIndex === -1) {
-        throw new ApiError(404, "User is not a member of this project");
+        throw new ApiError(
+            404,
+            "User is not a member of this project"
+        );
     }
 
     const projectMember = project.members[memberIndex];
 
     // Project owner cannot be removed
     if (project.owner.toString() === memberUserId.toString()) {
-        throw new ApiError(400, "Project owner cannot be removed");
+        throw new ApiError(
+            400,
+            "Project owner cannot be removed"
+        );
     }
 
     // Organization ADMIN cannot remove MANAGER
@@ -608,8 +613,8 @@ const removeProjectMember = async (
 
     await project.populate([
         { path: "organization", select: "name slug" },
-        { path: "owner", select: "name email" },
-        { path: "members.user", select: "name email" },
+        { path: "owner", select: "firstName lastName email" },
+        { path: "members.user", select: "firstName lastName email" },
     ]);
 
     return project;
